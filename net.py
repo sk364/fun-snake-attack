@@ -1,9 +1,23 @@
 import pygame,random,sys,os
 from pygame.locals import *
+import traceback
+
+from mastermind_import import *
+from settings import *
+import chat_server
 
 pygame.init()
-
 pygame.key.set_repeat(400,25)
+
+client = None
+server = None
+continuing = False
+
+log = [None]*scrollback
+
+print log
+
+to_send = []
 
 # speed of the game
 FPS=13.0
@@ -398,37 +412,76 @@ def pause():
 				item.set_bold(False)
 
 			screen.blit(item.label, item.position)
-				
-
 
 		pygame.display.flip()		
 
+def send_next_blocking():
+    global log, to_send, continuing
+    try:
+        if len(to_send) == 0:
+            client.send("", None)
+        else:
+            client.send(to_send[0],None)
+	    print to_send[0]
+            to_send = to_send[1:]
+	    
+
+        reply = None
+        while reply == None:
+            reply = client.receive(False)
+        log = reply
+
+    except MastermindError:
+        continuing = False
+
 def run(mode):
+	global client, server, continuing
+
 	p_right = 0
 	p_left = 0
 	p_up = 0
 	p_down = 0
-	
-	p1_right = 0
-        p1_left = 0
-        p1_up = 0
-        p1_down = 0
 
+	p1_right=0
+	p1_left=0
+	p1_down=0
+	p1_up=0
 
 	cur_dir = "RIGHT"
 	prev_dir = ""
 
 	cur_dir1 = "RIGHT"
-        prev_dir1 = ""
+	prev_dir1 = ""
 
 	global t
 
-	main_loop = True
+	client = MastermindClientTCP(client_timeout_connect,client_timeout_receive)
+    	try:
+    	    	print("Client connecting on \""+client_ip+"\", port "+str(port)+" . . .")
+            	client.connect(2, client_ip,port)
+    	except MastermindError:
+        	print("No server found; starting server!")
+		server = chat_server.ServerChat()
+		server.connect(server_ip,port)
+		server.accepting_allow()
+
+        	print("Client connecting on \""+client_ip+"\", port "+str(port)+" . . .")
+		client.connect(1, client_ip, port)
+
+    	print("Client connected!")
+
+	cid = 2
+	if server :
+		cid = 1
+
+	continuing = True
 
 	init()
 
-	while main_loop:
+	while continuing:
 		
+		send_next_blocking()
+
 		draw(mode)
 		
 		pygame.image.save(screen, "s.jpg")
@@ -442,11 +495,47 @@ def run(mode):
 		elif t!=-1:
 			display_game_over_screen(mode)
 
+		''' to receive add code here '''
+		recv_key = log[len(log)-1]
+		
+		if recv_key is not None and client._mm_id != recv_key[0]:
+			if recv_key[1] == 273:
+				p1_up=1
+				prev_dir1 = cur_dir1
+				cur_dir = "UP"
+				p1_down=0
+				p1_left=0
+				p1_right=0
+			elif recv_key[1] == 274:
+				p1_down=1
+				prev_dir = cur_dir
+				cur_dir = "DOWN"
+				p1_left=0
+				p1_right=0
+				p1_up=0
+			elif recv_key[1] == 275:
+				p1_right=1
+				prev_dir = cur_dir
+				cur_dir = "RIGHT"
+				p1_left=0
+				p1_down=0
+				p1_up=0
+			elif recv_key[1] == 276:
+				p1_left=1
+				prev_dir = cur_dir
+				cur_dir = "LEFT"
+				p1_right=0
+				p1_down=0
+				p1_up=0
+
 		for event in pygame.event.get():
 			if event.type ==pygame.QUIT:
 				pygame.quit()
 				sys.exit()
 			
+			''' To send to another player if keydown '''			
+
+
 			if event.type == pygame.KEYDOWN:
 				if event.key == K_DOWN and cur_dir != "UP":
 					p_down=1
@@ -476,37 +565,12 @@ def run(mode):
 					p_up=0
 					p_left=0
 					p_down=0
-				elif event.key == K_s and cur_dir1 != "UP":
-                                        p1_down=1
-                                        prev_dir1 = cur_dir1
-                                        cur_dir1 = "DOWN"
-                                        p1_left=0
-                                        p1_right=0
-                                        p1_up=0
-                                elif event.key == K_w and cur_dir1 != "DOWN":
-                                        p1_up=1
-                                        prev_dir1 = cur_dir1
-                                        cur_dir1 = "UP"
-                                        p1_down=0
-                                        p1_left=0
-                                        p1_right=0
-                                elif event.key == K_a and cur_dir1 != "RIGHT":
-                                        p1_left=1
-                                        prev_dir1 = cur_dir1
-                                        cur_dir1 = "LEFT"
-                                        p1_right=0
-                                        p1_up=0
-                                        p1_down=0
-                                elif event.key == K_d and cur_dir1 != "LEFT":
-                                        p1_right=1
-                                        prev_dir1 = cur_dir1
-                                        cur_dir1 = "RIGHT"
-                                        p1_up=0
-                                        p1_left=0
-                                        p1_down=0
 
 				elif event.key == K_ESCAPE:
 					pause()
+
+				to_send.append([cid, event.key])
+
 		if p_left:
 			move_left(snake, prev_dir,n_blocks)
 		elif p_right:
@@ -525,131 +589,4 @@ def run(mode):
                 elif p1_down:
                         move_down(snake1, prev_dir1,n_blocks1)
 
-
-#-----------------------------------------------------------------------
-def move_min_horizontal(cur_dir, prev_dir):
-
-	if food.x>snake[0].x:
-		print cur_dir
-		if  (food.x - snake[0].x) < (scr_width - food.x) + snake[0].x and cur_dir!="LEFT":
-			prev_dir = cur_dir
-			cur_dir = "RIGHT"
-			move_right(snake, prev_dir, n_blocks)
-
-		elif cur_dir!="RIGHT":
-			prev_dir = cur_dir
-			cur_dir = "LEFT"
-			move_left(snake, prev_dir, n_blocks)
-
-		else:
-			prev_dir = cur_dir
-			cur_dir="DOWN"
-			move_down(snake, prev_dir, n_blocks)
-
-
-	else:
-		print cur_dir
-		if  (-food.x + snake[0].x) < (scr_width + food.x) - snake[0].x and cur_dir!="RIGHT":
-			prev_dir = cur_dir
-			cur_dir = "LEFT"
-			move_left(snake, prev_dir, n_blocks)
-
-		elif cur_dir!="LEFT":
-			prev_dir = cur_dir
-			cur_dir = "RIGHT"
-			move_right(snake, prev_dir, n_blocks)
-
-		else:
-			prev_dir = cur_dir
-			cur_dir = "DOWN"
-			move_down(snake, prev_dir, n_blocks)
-
-	return [cur_dir, prev_dir]
-
-
-def move_min_vertical(cur_dir, prev_dir):
-	
-	if food.y>snake[0].y:
-		if  (food.y - snake[0].y) < (scr_height - food.y) + snake[0].y and cur_dir!="UP":
-			prev_dir = cur_dir
-			cur_dir = "DOWN"
-			move_down(snake, prev_dir, n_blocks)
-
-		elif cur_dir!="UP" and cur_dir!="DOWN":
-			prev_dir = cur_dir
-			cur_dir = "UP"
-			move_up(snake,prev_dir, n_blocks)
-
-		else:
-			prev_dir = cur_dir
-			cur_dir = "RIGHT"
-			move_right(snake, prev_dir, n_blocks)
-
-
-	else:
-		if  (-food.y + snake[0].y) < (scr_height + food.y) - snake[0].y and cur_dir!="DOWN":
-			prev_dir = cur_dir
-			cur_dir = "UP"
-			move_up(snake,prev_dir, n_blocks)
-
-		elif cur_dir!="UP" and cur_dir!="DOWN":
-			prev_dir = cur_dir
-			cur_dir = "DOWN"
-			move_down(snake, prev_dir, n_blocks)
-
-		else:
-			prev_dir = cur_dir
-			cur_dir = "RIGHT"
-			move_right(snake, prev_dir, n_blocks)
-
-	return [cur_dir, prev_dir]
-
-
-
-def cpu_player():
-	p_right = 0
-	p_left = 0
-	p_up = 0
-	p_down = 0
-
-	cur_dir = ""
-	prev_dir = ""
-
-	global t
-
-	main_loop = True
-
-	init()
-
-	while main_loop:
-		
-		draw("")
-		
-		pygame.image.save(screen, "s.jpg")
-		
-		if t==-1:
-			print cur_dir
-			game_over(snake,n_blocks,"")
-
-		if t > 0:
-			t-=1
-		elif t!=-1:
-			display_game_over_screen("")
-
-
-		for event in pygame.event.get():
-			if event.type ==pygame.QUIT:
-				pygame.quit()
-				sys.exit()
-			if event.type == pygame.KEYDOWN:
-				if event.key == K_ESCAPE:
-					pause()
-
-		print food.x, food.y
-		print snake[0].x, snake[0].y
-		print "-----------"
-
-		if food.y == snake[0].y or food.x != snake[0].x:
-			cur_dir, prev_dir = move_min_horizontal(cur_dir, prev_dir)
-		else:
-			cur_dir, prev_dir = move_min_vertical(cur_dir, prev_dir)	
+run("multi")
