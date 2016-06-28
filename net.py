@@ -125,7 +125,7 @@ def init():
 		snake1[i].x = origin1[0] - (snake1[i].width*i)
 		snake1[i].y = origin1[1]
 		snake1[i].color = [0,0,220]
-		
+	
 	place_food()
 	eaten = 0
 	eaten1 = 0
@@ -492,7 +492,7 @@ def run(mode):
 		elif t!=-1:
 			display_game_over_screen(mode)
 
-		''' to receive add code here '''
+
 		recv_key = log[len(log)-1]
 		
 		if recv_key is not None and client._mm_id != recv_key[0]:
@@ -530,9 +530,6 @@ def run(mode):
 				pygame.quit()
 				sys.exit()
 			
-			''' To send to another player if keydown '''			
-
-
 			if event.type == pygame.KEYDOWN:
 				if event.key == K_DOWN and cur_dir != "UP":
 					p_down=1
@@ -586,4 +583,3 @@ def run(mode):
                 elif p1_down:
                         move_down(snake1, prev_dir1,n_blocks1)
 
-run("multi")
