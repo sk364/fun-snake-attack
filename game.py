@@ -124,8 +124,7 @@ def init():
 # function to randomly place food
 def place_food():
 	food.x = random.randrange(0, scr_width, 5)
-	food.y = 200
-        #food.y = random.randrange(45, scr_height, 5)
+        food.y = random.randrange(45, scr_height, 5)
 
 
 # function to move the snake blocks by following the head block
