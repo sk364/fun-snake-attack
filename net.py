@@ -126,7 +126,9 @@ def init():
 		snake1[i].y = origin1[1]
 		snake1[i].color = [0,0,220]
 	
-	place_food()
+	if server:
+		place_food()
+
 	eaten = 0
 	eaten1 = 0
 
@@ -135,7 +137,7 @@ def init():
 
 # function to randomly place food
 def place_food():
-	food.x = random.randrange(0, scr_width, 5)`
+	food.x = random.randrange(0, scr_width, 5)
         food.y = random.randrange(45, scr_height, 5)
 
 
@@ -315,7 +317,9 @@ def draw(mode):
 	eaten = snake[0].x == food.x and snake[0].y == food.y
 
 	if eaten:
-		place_food()
+		if server:	
+			place_food()
+			to_send.append([1, '', food.x, food.y])
 		eaten = 0
 		eaten1=0
 		n_blocks += 1
@@ -331,7 +335,9 @@ def draw(mode):
 		eaten1 = snake1[0].x == food.x and snake1[0].y == food.y
 
 		if eaten1:
-			place_food()
+			if server:			
+				place_food()
+				to_send.append([1, '', food.x, food.y])
 			eaten1 = 0
 			eaten=0
 			n_blocks1 += 1
@@ -432,7 +438,7 @@ def send_next_blocking():
         continuing = False
 
 def run(mode):
-	global client, server, continuing
+	global client, server, continuing, to_send
 
 	p_right = 0
 	p_left = 0
@@ -475,6 +481,9 @@ def run(mode):
 
 	init()
 
+	if server:	
+		to_send.append(['','', food.x, food.y])
+	
 	while continuing:
 		
 		send_next_blocking()
@@ -495,35 +504,69 @@ def run(mode):
 
 		recv_key = log[len(log)-1]
 		
-		if recv_key is not None and client._mm_id != recv_key[0]:
-			if recv_key[1] == 273:
-				p1_up=1
-				prev_dir1 = cur_dir1
-				cur_dir = "UP"
-				p1_down=0
-				p1_left=0
-				p1_right=0
-			elif recv_key[1] == 274:
-				p1_down=1
-				prev_dir = cur_dir
-				cur_dir = "DOWN"
-				p1_left=0
-				p1_right=0
-				p1_up=0
-			elif recv_key[1] == 275:
-				p1_right=1
-				prev_dir = cur_dir
-				cur_dir = "RIGHT"
-				p1_left=0
-				p1_down=0
-				p1_up=0
-			elif recv_key[1] == 276:
-				p1_left=1
-				prev_dir = cur_dir
-				cur_dir = "LEFT"
-				p1_right=0
-				p1_down=0
-				p1_up=0
+		if not server:
+			food.x = recv_key[2]
+			food.y = recv_key[3]
+
+		if recv_key is not None:
+			if recv_key[0] == 2:
+				if recv_key[1] == 273 and cur_dir != "DOWN":
+					p1_up=1
+					prev_dir1 = cur_dir1
+					cur_dir1 = "UP"
+					p1_down=0
+					p1_left=0
+					p1_right=0
+				elif recv_key[1] == 274 and cur_dir != "UP":
+					p1_down=1
+					prev_dir1 = cur_dir1
+					cur_dir1 = "DOWN"
+					p1_left=0
+					p1_right=0
+					p1_up=0
+				elif recv_key[1] == 275 and cur_dir1 != "LEFT":
+					p1_right=1
+					prev_dir1 = cur_dir1
+					cur_dir1 = "RIGHT"
+					p1_left=0
+					p1_down=0
+					p1_up=0
+				elif recv_key[1] == 276 and cur_dir1 != "RIGHT":
+					p1_left=1
+					prev_dir1 = cur_dir1
+					cur_dir1 = "LEFT"
+					p1_right=0
+					p1_down=0
+					p1_up=0
+			elif recv_key[0] == 1:
+				if recv_key[1] == 273 and cur_dir != "DOWN":
+					p_up=1
+					prev_dir = cur_dir
+					cur_dir = "UP"
+					p_down=0
+					p_left=0
+					p_right=0
+				elif recv_key[1] == 274 and cur_dir != "UP":
+					p_down=1
+					prev_dir = cur_dir
+					cur_dir = "DOWN"
+					p_left=0
+					p_right=0
+					p_up=0
+				elif recv_key[1] == 275 and cur_dir != "LEFT":
+					p_right=1
+					prev_dir = cur_dir
+					cur_dir = "RIGHT"
+					p_left=0
+					p_down=0
+					p_up=0
+				elif recv_key[1] == 276 and cur_dir != "RIGHT":
+					p_left=1
+					prev_dir = cur_dir
+					cur_dir = "LEFT"
+					p_right=0
+					p_down=0
+					p_up=0
 
 		for event in pygame.event.get():
 			if event.type ==pygame.QUIT:
@@ -531,39 +574,69 @@ def run(mode):
 				sys.exit()
 			
 			if event.type == pygame.KEYDOWN:
-				if event.key == K_DOWN and cur_dir != "UP":
-					p_down=1
-					prev_dir = cur_dir
-					cur_dir = "DOWN"
-					p_left=0
-					p_right=0
-					p_up=0
-				elif event.key == K_UP and cur_dir != "DOWN":
-					p_up=1
-					prev_dir = cur_dir
-					cur_dir = "UP"
-					p_down=0
-					p_left=0
-					p_right=0
-				elif event.key == K_LEFT and cur_dir != "RIGHT":
-					p_left=1
-					prev_dir = cur_dir
-					cur_dir = "LEFT"
-					p_right=0
-					p_up=0
-					p_down=0
-				elif event.key == K_RIGHT and cur_dir != "LEFT":
-					p_right=1
-					prev_dir = cur_dir
-					cur_dir = "RIGHT"
-					p_up=0
-					p_left=0
-					p_down=0
+				if server:
+					if event.key == K_DOWN and cur_dir != "UP":
+						p_down=1
+						prev_dir = cur_dir
+						cur_dir = "DOWN"
+						p_left=0
+						p_right=0
+						p_up=0
+					elif event.key == K_UP and cur_dir != "DOWN":
+						p_up=1
+						prev_dir = cur_dir
+						cur_dir = "UP"
+						p_down=0
+						p_left=0
+						p_right=0
+					elif event.key == K_LEFT and cur_dir != "RIGHT":
+						p_left=1
+						prev_dir = cur_dir
+						cur_dir = "LEFT"
+						p_right=0
+						p_up=0
+						p_down=0
+					elif event.key == K_RIGHT and cur_dir != "LEFT":
+						p_right=1
+						prev_dir = cur_dir
+						cur_dir = "RIGHT"
+						p_up=0
+						p_left=0
+						p_down=0
+				else:
+					if event.key == K_DOWN and cur_dir1 != "UP":
+		                                p1_down=1
+		                                prev_dir1 = cur_dir1
+		                                cur_dir1 = "DOWN"
+		                                p1_left=0
+		                                p1_right=0
+		                                p1_up=0
+		                        elif event.key == K_UP and cur_dir1 != "DOWN":
+		                                p1_up=1
+		                                prev_dir1 = cur_dir1
+		                                cur_dir1 = "UP"
+		                                p1_down=0
+		                                p1_left=0
+		                                p1_right=0
+		                        elif event.key == K_LEFT and cur_dir1 != "RIGHT":
+		                                p1_left=1
+		                                prev_dir1 = cur_dir1
+		                                cur_dir1 = "LEFT"
+		                                p1_right=0
+		                                p1_up=0
+		                                p1_down=0
+		                        elif event.key == K_RIGHT and cur_dir1 != "LEFT":
+		                                p1_right=1
+		                                prev_dir1 = cur_dir1
+		                                cur_dir1 = "RIGHT"
+		                                p1_up=0
+		                                p1_left=0
+		                                p1_down=0
 
-				elif event.key == K_ESCAPE:
+				if event.key == K_ESCAPE:
 					pause()
 
-				to_send.append([cid, event.key])
+				to_send.append([cid, event.key, food.x, food.y])
 
 		if p_left:
 			move_left(snake, prev_dir,n_blocks)
