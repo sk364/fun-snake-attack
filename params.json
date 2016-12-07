@@ -1,0 +1,6 @@
+{
+  "name": "Fun-snake-attack",
+  "tagline": "A two-player extended version of Snake game developed in Python using Pygame.",
+  "body": "### About\r\n[Snake Game](https://en.wikipedia.org/wiki/Snake_(video_game)) is about a snake trying to eat food in an area without bumping into itself or the game is over. This extended version of snake consists of a two-player version where there are two snakes fighting for a single food block.\r\n\r\n### Installation\r\nThe game is developed using Python 2.7 and pygame module in it.\r\nInstall [Python 2.7](https://www.python.org/download/releases/2.7/) and finally install [Pygame](http://www.pygame.org/download.shtml) to complete your installation.\r\n\r\n### Run the Game\r\nRun main.py using following command - python2.7 main.py to run the game.\r\n\r\n### Authors and Contributors\r\n@sk364, @utsavvicky\r\n\r\n### Support or Contact\r\nHaving trouble with installation or running? Mail at skad5455[at]gmail[dot]com or utsavpoddar[at]iiidmj.ac.in and we’ll help you sort it out.",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
