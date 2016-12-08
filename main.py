@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import net
+#import net
 import os
 import imp
 import sys
@@ -87,8 +87,12 @@ class GameMenu():
 								self.funcs[item.text]()
 							elif item.text == "Single Player Mode":
 								self.funcs[item.text]("single")
-							elif item.text == "Two Player Mode" or item.text == "LAN Mode":
+							elif item.text == "Two Player Mode":
 								self.funcs[item.text]("multi")
+							elif item.text == "LAN Mode":
+								pygame.quit()
+								sys.exit()
+								#self.funcs[item.text]("lan")
 							elif item.text == "CPU Mode":
 								self.funcs[item.text]()
 
@@ -128,7 +132,7 @@ if __name__ == "__main__":
 
    	funcs = { "Single Player Mode" : game.run,
 		"Two Player Mode": game.run,
-		"LAN Mode": net.run,
+		#"LAN Mode": net.run,
 		"CPU Mode": game.cpu_player,
 		"Quit" : sys.exit
     	}
