@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-#import net
 import os
 import imp
 import sys
@@ -9,8 +7,8 @@ import game
 
 pygame.init()
 
-
 class MenuItem(pygame.font.Font):
+	''' Class for item listed in menu '''
 	def __init__(self, text, font=None, font_size=48, font_color=(255, 255, 255), (pos_x, pos_y)=(0, 0)):
     		pygame.font.Font.__init__(self, font, font_size)
         	self.text = text
@@ -40,6 +38,7 @@ class MenuItem(pygame.font.Font):
  
  
 class GameMenu():
+	''' Class for running based on which item the user selected '''
    	def __init__(self, screen, items, funcs, bg_color=(0,0,0), font=None, font_size=30, font_color=(255, 255, 255)):
         	self.screen = screen
 		self.scr_width = self.screen.get_rect().width
@@ -99,7 +98,7 @@ class GameMenu():
 
 	    	            # Redraw the background
 	    		screen.fill([0, 0, 0])
-    	    		#screen.blit(BackGround.image, BackGround.rect)
+    	    		screen.blit(BackGround.image, BackGround.rect)
    
 
             		for item in self.items:
@@ -125,10 +124,10 @@ if __name__ == "__main__":
 
    	screen = pygame.display.set_mode((610, 480), 0, 32)
     
-   	#BackGround = Background("res/Background/background_chess_set.jpg", [0,0])
+   	BackGround = Background("s.jpg", [0,0])
 
    	screen.fill(BLACK)
-   	#screen.blit(BackGround.image, BackGround.rect)
+   	screen.blit(BackGround.image, BackGround.rect)
 
    	funcs = { "Single Player Mode" : game.run,
 		"Two Player Mode": game.run,
